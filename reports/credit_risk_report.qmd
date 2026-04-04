@@ -1,3 +1,6 @@
 ---
-title: Credit Risk Report
+title: 'Credit Risk Early-Warning System in R'
+format: html
 ---
+
+This report stub accompanies the real FDIC schema mapping version.
