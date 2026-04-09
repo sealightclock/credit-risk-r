@@ -1,0 +1,6 @@
+metric,value
+number_of_banks_scored,4336
+average_predicted_risk,0.25020942624295733
+median_predicted_risk,0.21887448536589477
+max_predicted_risk,0.9997438381990402
+min_predicted_risk,1.9444646561514925e-4
