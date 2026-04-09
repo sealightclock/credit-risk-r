@@ -15,7 +15,8 @@ required_packages <- c(
   "stringr",
   "forcats",
   "glue",
-  "here"
+  "here",
+  "quarto"
 )
 
 install_if_missing <- function(pkgs) {

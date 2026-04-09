@@ -1,6 +1,22 @@
 ---
-title: 'Credit Risk Early-Warning System in R'
-format: html
+title: "Credit Risk Early-Warning System (Single-Quarter Version)"
+author: "Your Name"
+format:
+  html:
+    toc: true
+    number-sections: true
+    theme: cosmo
+execute:
+  echo: true
+  warning: false
+  message: false
 ---
 
-This report stub accompanies the real FDIC schema mapping version.
+```{r}
+# Load project setup
+source("R/00_packages.R")
+source("R/01_config.R")
+
+feature_panel <- readRDS(file.path(dir_features, "feature_panel.rds"))
+watchlist <- readr::read_csv(file.path(dir_watchlists, "watchlist.csv"), show_col_types = FALSE)
+metrics <- readr::read_csv(file.path(dir_metrics, "logistic_metrics.csv"), show_col_types = FALSE)
