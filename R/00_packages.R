@@ -16,7 +16,8 @@ required_packages <- c(
   "forcats",
   "glue",
   "here",
-  "quarto"
+  "quarto",
+  "xgboost"
 )
 
 install_if_missing <- function(pkgs) {
