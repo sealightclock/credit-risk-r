@@ -1,37 +1,103 @@
-# Real FFIEC Call Report schema notes
+# Feature Panel Schema (Actual Implementation)
 
-This project is mapped to **FFIEC Call Report / FDIC bulk-data style fields**.
+This document reflects the **exact structure of `feature_panel.rds`** used
+throughout modeling and backtesting.
 
-## Why the mapping uses `coalesce(...)`
-Call Report bulk files commonly expose the same line item with different mnemonic prefixes:
+Each row represents:
+- one bank (`id_rssd`)
+- one reporting date (`report_date`)
 
-- `RCFD` = consolidated / all offices
-- `RCON` = domestic offices
-- other prefixes may appear for certain schedules and forms
+---
 
-Because raw files differ by form version and quarter, the project uses a helper that picks the **first existing non-missing** field from a list of candidate columns.
+## 1. Core identifiers
 
-## Stable line items used
+- `id_rssd`  
+  Unique bank identifier (FDIC / FFIEC)
 
-- Total assets: item **2170**
-- Total loans and leases, net of unearned income: item **2122**
-- Allowance for loan and lease losses / ACL: item **3123**
-- Total deposits: item **2200**
-- Total equity capital: item **3210**
-- Net income (loss): item **4340**
-- Tier 1 capital allowable under the risk-based capital guidelines: item **8274**
-- Risk-weighted assets (net of allowances and other deductions): item **A223**
+- `report_date`  
+  Reporting period (quarter-end date)
 
-## Practical caution
+---
 
-Two fields are the hardest to make fully universal directly from raw bulk Call Report files:
+## 2. Raw balance sheet variables (standardized)
 
-1. `noncurrent_loans`
-2. `net_charge_offs`
+These fields are resolved via `coalesce(...)` from raw Call Report columns.
 
-That is because they are often represented by multiple schedule-specific columns rather than a single balance-sheet line item.
+- `total_assets`  
+- `total_loans`  
+- `allowance`  
+- `total_deposits`  
+- `total_equity`  
+- `net_income`  
+- `tier1_capital`  
+- `risk_weighted_assets`
 
-The scripts therefore:
-- try obvious pre-aggregated columns first
-- then derive them from common schedule fields where available
-- otherwise leave them as `NA` so the project still runs and you can map the exact columns in your chosen quarter files
+---
+
+## 3. Credit risk variables (best-effort fields)
+
+These may be partially missing depending on source files.
+
+- `noncurrent_loans`  
+- `net_charge_offs`
+
+These are:
+- derived when possible
+- otherwise set to `NA`
+
+---
+
+## 4. Derived financial ratios (used in models)
+
+The following features are computed in the pipeline:
+
+- `capital_ratio`  
+  = tier1_capital / risk_weighted_assets
+
+- `roa`  
+  = net_income / total_assets
+
+- `loan_ratio`  
+  = total_loans / total_assets
+
+- `deposit_ratio`  
+  = total_deposits / total_assets
+
+- `allowance_ratio`  
+  = allowance / total_loans
+
+---
+
+## 5. Modeling target
+
+- `default_flag`  
+  Binary indicator used for supervised learning
+
+Definition depends on backtest logic (see `R/11_backtest.R`).
+
+---
+
+## 6. Data characteristics
+
+- Dataset is **panel data**
+- Missing values (`NA`) are allowed for:
+  - `noncurrent_loans`
+  - `net_charge_offs`
+- Core balance sheet variables are expected to be mostly populated
+
+---
+
+## 7. Design principles (as implemented)
+
+- Use **stable column names** regardless of raw schema variation
+- Avoid breaking the pipeline due to missing raw fields
+- Prefer **robustness over perfect regulatory reconstruction**
+
+---
+
+## 8. IMPORTANT: Source of truth
+
+To verify or update this schema, run:
+
+```r
+names(feature_panel)
