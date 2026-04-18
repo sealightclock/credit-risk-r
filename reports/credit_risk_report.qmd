@@ -13,10 +13,76 @@ execute:
 ---
 
 ```{r}
-# Load project setup
 source("R/00_packages.R")
 source("R/01_config.R")
 
 feature_panel <- readRDS(file.path(dir_features, "feature_panel.rds"))
 watchlist <- readr::read_csv(file.path(dir_watchlists, "watchlist.csv"), show_col_types = FALSE)
 metrics <- readr::read_csv(file.path(dir_metrics, "logistic_metrics.csv"), show_col_types = FALSE)
+```
+
+# Executive Summary
+
+This project builds a **credit risk scoring model** using publicly available U.S. banking data.
+
+Because the dataset contains a single reporting period, the analysis focuses on **cross-sectional risk classification** rather than time-based prediction.
+
+The model identifies banks with relatively higher credit risk and produces a ranked **watchlist** to support risk monitoring.
+
+# Business Objective
+
+The main question is:
+
+> Which banks currently look higher risk based on their financial ratios?
+
+# Data Overview
+
+```{r}
+glimpse(feature_panel)
+```
+
+# Target Definition
+
+The target variable `high_risk` is defined as:
+
+- banks in the top 25% of net charge-off ratios
+
+```{r}
+feature_panel %>% count(high_risk)
+```
+
+# Model Performance
+
+```{r}
+metrics
+```
+
+# Top 20 Watchlist
+
+```{r}
+watchlist %>%
+  slice_head(n = 20) %>%
+  select(bank_name, pred_prob, risk_bucket, roa, npa_ratio)
+```
+
+# Key Visualizations
+
+## Top 20 Risky Banks
+
+```{r}
+knitr::include_graphics(file.path(dir_figures, "top_20_risky_banks.png"))
+```
+
+## Risk Distribution
+
+```{r}
+knitr::include_graphics(file.path(dir_figures, "risk_bucket_distribution.png"))
+```
+
+# Conclusion
+
+This project demonstrates:
+- working with real financial data
+- feature engineering for credit risk
+- building and evaluating models
+- translating predictions into a business-style watchlist
