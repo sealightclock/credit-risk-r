@@ -1,103 +1,74 @@
-# Feature Panel Schema (Actual Implementation)
+# FDIC Schema Notes (Beginner-Friendly)
 
-This document reflects the **exact structure of `feature_panel.rds`** used
-throughout modeling and backtesting.
+## Why this file exists
 
-Each row represents:
-- one bank (`id_rssd`)
-- one reporting date (`report_date`)
+FDIC data is complex:
+- many columns
+- inconsistent naming
+- some fields are ratios, some are raw values
 
----
-
-## 1. Core identifiers
-
-- `id_rssd`  
-  Unique bank identifier (FDIC / FFIEC)
-
-- `report_date`  
-  Reporting period (quarter-end date)
+This file explains how we simplify it.
 
 ---
 
-## 2. Raw balance sheet variables (standardized)
+## Key fields used
 
-These fields are resolved via `coalesce(...)` from raw Call Report columns.
-
-- `total_assets`  
-- `total_loans`  
-- `allowance`  
-- `total_deposits`  
-- `total_equity`  
-- `net_income`  
-- `tier1_capital`  
-- `risk_weighted_assets`
-
----
-
-## 3. Credit risk variables (best-effort fields)
-
-These may be partially missing depending on source files.
-
-- `noncurrent_loans`  
-- `net_charge_offs`
-
-These are:
-- derived when possible
-- otherwise set to `NA`
+| Project Name | FDIC Column |
+|-------------|------------|
+| bank_id | CERT |
+| bank_name | NAME |
+| quarter | REPDTE |
+| total_assets | ASSET |
+| total_loans | LNLSNET |
+| deposits | DEP |
+| net_income | NETINC |
 
 ---
 
-## 4. Derived financial ratios (used in models)
+## Risk-related fields
 
-The following features are computed in the pipeline:
-
-- `capital_ratio`  
-  = tier1_capital / risk_weighted_assets
-
-- `roa`  
-  = net_income / total_assets
-
-- `loan_ratio`  
-  = total_loans / total_assets
-
-- `deposit_ratio`  
-  = total_deposits / total_assets
-
-- `allowance_ratio`  
-  = allowance / total_loans
+| Project Name | FDIC Column |
+|-------------|------------|
+| noncurrent_loans | NCLNLSR |
+| net_charge_offs | NTLNLSR |
+| allowance | LNATRESR |
 
 ---
 
-## 5. Modeling target
+## Important note
 
-- `default_flag`  
-  Binary indicator used for supervised learning
+Some FDIC columns are:
+- already ratios
+- not raw dollar values
 
-Definition depends on backtest logic (see `R/11_backtest.R`).
+Example:
+- `NCLNLSR` = ratio, not amount
 
----
-
-## 6. Data characteristics
-
-- Dataset is **panel data**
-- Missing values (`NA`) are allowed for:
-  - `noncurrent_loans`
-  - `net_charge_offs`
-- Core balance sheet variables are expected to be mostly populated
+👉 So we **do NOT divide again**
 
 ---
 
-## 7. Design principles (as implemented)
+## Why this matters
 
-- Use **stable column names** regardless of raw schema variation
-- Avoid breaking the pipeline due to missing raw fields
-- Prefer **robustness over perfect regulatory reconstruction**
+If you treat a ratio as an amount:
+- your model becomes wrong
+- results become meaningless
 
 ---
 
-## 8. IMPORTANT: Source of truth
+## Simplification approach
 
-To verify or update this schema, run:
+Instead of using hundreds of fields:
 
-```r
-names(feature_panel)
+We pick:
+- a small number of stable variables
+- easy-to-understand financial ratios
+
+---
+
+## Future improvement
+
+In a more advanced version:
+- map full FFIEC schema
+- separate domestic vs consolidated
+- build more precise ratios
